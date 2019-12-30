@@ -101,6 +101,7 @@ bool NativeWindowHelper::nativeEventFilter(void *msg, long *result)
             return true;
         }
     } else if (WM_GETMINMAXINFO == lpMsg->message) {
+        return false;
         LPMINMAXINFO lpMinMaxInfo = reinterpret_cast<LPMINMAXINFO>(lParam);
 
         QRect g = d->availableGeometry();
@@ -159,6 +160,8 @@ bool NativeWindowHelper::eventFilter(QObject *obj, QEvent *ev)
     if (ev->type() == QEvent::WinIdChange) {
         d->updateWindowStyle();
     } else if (ev->type() == QEvent::Show) {
+        d->updateWindowStyle();
+    }else if (ev->type() == QEvent::WindowStateChange) {
         d->updateWindowStyle();
     }
 
@@ -243,8 +246,9 @@ int NativeWindowHelperPrivate::hitTest(int x, int y) const
 {
     Q_CHECK_PTR(window);
 
-    x = x / window->devicePixelRatio();
-    y = y / window->devicePixelRatio();
+    auto origin = window->screen()->geometry().topLeft();
+    x = (x - origin.x()) / window->devicePixelRatio() + origin.x();
+    y = (y - origin.y()) / window->devicePixelRatio() + origin.y();
 
     enum RegionMask {
         Client = 0x0000,
